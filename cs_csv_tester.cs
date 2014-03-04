@@ -1,7 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
+using my_csv_wrapper;
 
 // A csv test
+
  
 public class cs_csv_tester
 {
@@ -42,7 +44,9 @@ public class cs_csv_tester
 
 			new string[]{"", "", ""}};
 	
-		Console.WriteLine ("Placeholder");
+		Console.WriteLine ("Starting CSV Tester");
+		
+		cs_csv_wrapper.do_parse_csv();
 	}
 }
 
