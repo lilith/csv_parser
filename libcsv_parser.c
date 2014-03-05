@@ -6,11 +6,11 @@
 #include <string.h>
 
 // TODO: Take filename of file to be parsed
-extern void parse_csv()
+extern void parse_csv(char* filename)
 {
 	printf("Reached parser\n");
 	
-	char filename[] = "testfile.csv";
+	// char filename[] = "testfile.csv";
 
 	FILE *file;
 	file = fopen(filename, "r");
@@ -26,8 +26,6 @@ extern void parse_csv()
 	// Fake some input:
 	//char input[] = "field1,field2,fi\\\\eld3\r\n\"aaa\r\n\",\"bb,b\",\"ccc\"\r\n\"in \"\"quotes\"\"\",2,3\r\n1,2,\r\nzzz,yyy,xxx\r\n1,,3\r\n,,";
 	
-	// Keep track of where we are in the parse
-	//int location = 0;
 	// Track if we are currently inside quotes
 	char in_quotes = 0;
 	const int separator = (int)','; // Don't set this to something wierd like a backslash.
@@ -74,6 +72,9 @@ extern void parse_csv()
 				case '\\':
 					// The next character is escaped.  Handle that here.
 					// Escaped characters cannot be special.
+					// Note: if you want to handle line endings in a cell, it's probably best to use quotes and not escape.
+					//  This is because if you try to escape a CLRF, I think you'll just end up escaping the CL and leave the
+					//  RF alone.
 					current = next;
 					next = getc(file);
 					printf("%c",current);// TEST output
