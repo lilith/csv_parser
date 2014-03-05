@@ -39,6 +39,7 @@ extern void parse_csv()
 			{
 				case '"':
 					// Handle quotes.
+					// Out of spec option we could add: allow single quotes
 					if (in_quotes)
 					{
 						// We were already in quotes, so end the quote.
@@ -56,20 +57,32 @@ extern void parse_csv()
 					location++;
 					printf("%c",input[location]);// TEST output
 					break;
+				// Out of spec option that I'm adding: allow CL or RF individually to end lines as well as CLRF
 				case '\r':
 					if (in_quotes)
 					{
 						printf("%c",input[location]);// TEST output
 					} else {
-						// This looks like the start of a line ending.
-						if (input[location] == '\n')
+						// This looks like a line ending.
+						if (input[location+1] == '\n')
 						{
-							printf("CLRF\r\n",input[location]);// TEST output
+							// Next character is part of the line ending.  Include it.
+							location++;
+							printf("CLRF\r\n");// TEST output
 						} else {
-							printf("%c",input[location]);// TEST output
+							printf("RF\r");// TEST output
 						}
 					}
-				// Out of spec option that could be added here: allow CL or RF individually to end lines
+					break;
+				case '\n':
+					if (in_quotes)
+					{
+						printf("%c",input[location]);// TEST output
+					} else {
+						// This looks like a line ending.
+						printf("RF\r");// TEST output
+					}
+					break;
 				default:
 					printf("%c",input[location]);// TEST output
 			}
