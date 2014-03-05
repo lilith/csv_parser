@@ -50,6 +50,7 @@ extern void parse_csv(char* filename)
 				printf("%c",current);// TEST output
 			} else {
 				// Start a new cell
+				in_quotes = 0;
 				printf(">"); // TEST output
 			}
 		} else {
@@ -60,13 +61,22 @@ extern void parse_csv(char* filename)
 					// Out of spec option we could add: allow single quotes
 					if (in_quotes)
 					{
-						// We were already in quotes, so end the quote.
-						in_quotes = 0;
-						printf("-EQ-");// TEST output
+						// We were already in quotes, so either this is a double-quote which turns into a single quote
+						// or it should be the end of the cell.
+						if (next == '"')
+						{
+							printf("\"");// TEST output
+							current = next;
+							next = getc(file);
+						} else {
+							// Hmm.  Let's just do nothing.  If it's a separator or line feed it'll get handled next round.
+							// If not, it might be best to just ignore this quote.
+						}
+						
 					} else {
-						// We were not inside quotes, so start a new quoted section.
+						// We were not already inside quotes, so mark this cell as quoted
 						in_quotes = 1;
-						printf("-SQ-"); // TEST output
+						//printf("-SQ-"); // TEST output
 					}
 					break;
 				case '\\':
@@ -96,6 +106,8 @@ extern void parse_csv(char* filename)
 							printf("RF\r\n");// TEST output
 						}
 					}
+					// Start a new cell
+					in_quotes = 0;
 					break;
 				case '\n':
 					if (in_quotes)
@@ -104,7 +116,10 @@ extern void parse_csv(char* filename)
 					} else {
 						// This looks like a line ending.
 						printf("RF\r\n");// TEST output
+						// Start a new cell
+						in_quotes = 0;
 					}
+
 					break;
 				default:
 					printf("%c",current);// TEST output
