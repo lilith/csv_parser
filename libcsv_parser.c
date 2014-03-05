@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 // Parse a line, return when we're done.
 // Update loc whenever we move forward a character.
 void parse_line(char input[], int* loc)
