@@ -1,6 +1,16 @@
 csv_parser
 ==========
 
+My general approach is to first check to see if the character is a multi-character character (so, escaped or a line ending).  If it is, then finish reading the character before continuing.
+
+After that, check to see if we're ending a line (line ending), or a ending a cell (comma, or other delimiter).
+
+When we see an un-escaped quote, we are not allowed to finish cells or lines until the closing quote has passed.
+
+
+Task follows:
+
+
 The task is to create a RFC 4180-compliant CSV parser in C. You can
 assume that no headers are used, but it must be able to handle the
 pathological case of a RFC-compliant CSV file.  You may assume any
