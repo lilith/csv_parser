@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: Take filename of file to be parsed
-extern void parse_csv(char* filename)
+// Usage:
+// Call parse_csv with the filename, a variable to hold a pointer, 
+// and two ints that will tell you the dimensions of the array that it will keep at the pointer.
+// Use the arrays as you see fit, then call free_csv_mem() with the pointer and the dimensions to free up the memory.
+extern void parse_csv(char* filename, char* pointer_to_memory, int* rows, int* cols, int* cell_size)
 {
 	printf("Reached parser\n");
-	
-	// char filename[] = "testfile.csv";
 
 	FILE *file;
 	file = fopen(filename, "r");
@@ -20,7 +21,7 @@ extern void parse_csv(char* filename)
 		printf("An error occurred opening the file: %s\n", filename);
 		return;
 	}
-	printf("file opened\n");
+	//printf("file opened\n");
 	
 	// Read file to be parsed
 	// Fake some input:
@@ -38,19 +39,33 @@ extern void parse_csv(char* filename)
 		next = getc(file);
 	}
 
-	// Iterate over the input
+	// Iterate over the input, counting rows and columns.
+	// We're doing this to find out how much memory we need to assign.
+	
+	int cur_cols = 1;
+	int cur_rows = 0;
+	int cur_cell_size = 1;
+	int max_cols = 1;
+	int max_cell_size = 1;
+	
 	while (current != EOF)
 	{
-		
 		if (current == separator)
 		{
 			// Out of spec option that could be added here: Handle other separators
 			if (in_quotes)
 			{
-				printf("%c",current);// TEST output
+				printf("%c%d",current,in_quotes);// TEST output
+				cur_cell_size++;
 			} else {
 				// Start a new cell
 				in_quotes = 0;
+				if (cur_cell_size > max_cell_size)
+				{
+					max_cell_size = cur_cell_size;
+				}
+				cur_cell_size = 1;
+				cur_cols++;
 				printf(">"); // TEST output
 			}
 		} else {
@@ -68,13 +83,13 @@ extern void parse_csv(char* filename)
 							printf("\"");// TEST output
 							current = next;
 							next = getc(file);
-						} else {
-							// Hmm.  Let's just do nothing.  If it's a separator or line feed it'll get handled next round.
-							// If not, it might be best to just ignore this quote.
+							cur_cell_size++;
+						} else if (next == '\r' || next == '\n' || next == separator) {
+							in_quotes = 0;
 						}
 						
-					} else {
-						// We were not already inside quotes, so mark this cell as quoted
+					} else if (cur_cell_size == 1) {
+						// We were not already inside quotes and this is the first char, so mark this cell as quoted
 						in_quotes = 1;
 						//printf("-SQ-"); // TEST output
 					}
@@ -88,47 +103,82 @@ extern void parse_csv(char* filename)
 					current = next;
 					next = getc(file);
 					printf("%c",current);// TEST output
+					cur_cell_size++;
 					break;
 				// Out of spec option that I'm adding: allow CL or RF individually to end lines as well as CLRF
-				case '\r':
+				case '\r': // fallthrough
+				case '\n':
 					if (in_quotes)
 					{
-						printf("%c",current);// TEST output
+						printf("=%c",current);// TEST output
+						cur_cell_size++;
 					} else {
 						// This looks like a line ending.
-						if (next == '\n')
+						if (current == '\r' && next == '\n')
 						{
 							// Next character is part of the line ending.  Include it.
 							current = next;
 							next = getc(file);
-							printf("CLRF\r\n");// TEST output
-						} else {
-							printf("RF\r\n");// TEST output
 						}
-					}
-					// Start a new cell
-					in_quotes = 0;
-					break;
-				case '\n':
-					if (in_quotes)
-					{
-						printf("%c",current);// TEST output
-					} else {
-						// This looks like a line ending.
-						printf("RF\r\n");// TEST output
+						printf("LF\r\n");// TEST output
+						
+						// Start a new row
+						cur_rows++;
+						if (cur_cols > max_cols)
+						{
+							max_cols = cur_cols;
+						}
+						if (cur_cell_size > max_cell_size)
+						{
+							max_cell_size = cur_cell_size;
+						}
+						cur_cell_size = 1;
 						// Start a new cell
+						cur_cols = 1;
 						in_quotes = 0;
 					}
-
 					break;
 				default:
 					printf("%c",current);// TEST output
+					cur_cell_size++;
 			}
 		}
 		current = next;
 		next = getc(file);
 	}
+	if (cur_cols > max_cols)
+	{
+		max_cols = cur_cols;
+	}
+	if (cur_cell_size > max_cell_size)
+	{
+		max_cell_size = cur_cell_size;
+	}
+	
+	printf("max columns is: %d  rows is:%d  cell size is: %d\n", max_cols, cur_rows, max_cell_size);
+
+	*cols = max_cols;
+	*cell_size = max_cell_size;
+	*rows = cur_rows;
+	
+	// Ok, now allocate memory for this, and go through it again.  This time we'll assign the cells to the memory.
+	// Test passing strings back to C#
+	pointer_to_memory = malloc((sizeof(char) * cur_rows * max_cols * max_cell_size));
+
+	
+	((char***)pointer_to_memory)[0][0][0] = 'a';
+	((char***)pointer_to_memory)[0][0][1] = NULL;
+	
+	// Assign the cells to the allocated memory.
 	
 	// Clean up.
 	fclose(file);
+}
+
+
+extern void free_csv_mem(char* pointer_to_memory)
+{
+	// Free the memory.
+	free(pointer_to_memory);
+	pointer_to_memory = NULL;
 }
